@@ -67,7 +67,7 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: strings.Join(r.Subscriptions, ", "),
 			},
 			{
-				Label: "Last Seen",
+				Label: "Last Received Keepalive",
 				Value: timeutil.HumanTimestamp(r.LastSeen),
 			},
 			{

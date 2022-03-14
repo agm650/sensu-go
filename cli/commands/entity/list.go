@@ -108,7 +108,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Last Seen",
+			Title: "Last Received Keepalive",
 			CellTransformer: func(data interface{}) string {
 				entity, ok := data.(corev2.Entity)
 				if !ok {

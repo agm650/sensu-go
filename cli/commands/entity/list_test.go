@@ -101,7 +101,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "ID")
 	assert.Contains(out, "OS")
 	assert.Contains(out, "Subscriptions")
-	assert.Contains(out, "Last Seen")
+	assert.Contains(out, "Last Received Keepalive")
 	assert.Nil(err)
 }
 
