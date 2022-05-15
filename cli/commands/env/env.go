@@ -26,6 +26,15 @@ const (
 		`{{ .Prefix }}SENSU_TIMEOUT{{ .Delimiter }}{{ .Timeout }}{{ .LineEnding }}` +
 		`{{ .UsageHint }}`
 
+	envTmplAPI = `{{ .Prefix }}SENSU_API_URL{{ .Delimiter }}{{ .APIURL }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_NAMESPACE{{ .Delimiter }}{{ .Namespace }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_FORMAT{{ .Delimiter }}{{ .Format }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_API_KEY{{ .Delimiter }}{{ .APIKey }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_TRUSTED_CA_FILE{{ .Delimiter }}{{ .TrustedCAFile }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_INSECURE_SKIP_TLS_VERIFY{{ .Delimiter }}{{ .InsecureSkipTLSVerify }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_TIMEOUT{{ .Delimiter }}{{ .Timeout }}{{ .LineEnding }}` +
+		`{{ .UsageHint }}`
+
 	shellFlag = "shell"
 )
 
@@ -88,20 +97,28 @@ func (s shellConfig) UsageHint() string {
 // execute contains the actual logic for displaying the environment
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		templateValue := envTmpl
+
 		shellCfg := shellConfig{
 			args:                  os.Args,
 			APIURL:                cli.Config.APIUrl(),
 			Namespace:             cli.Config.Namespace(),
 			Format:                cli.Config.Format(),
 			APIKey:                cli.Config.APIKey(),
-			AccessToken:           cli.Config.Tokens().Access,
-			AccessTokenExpiresAt:  cli.Config.Tokens().ExpiresAt,
-			RefreshToken:          cli.Config.Tokens().Refresh,
 			TrustedCAFile:         cli.Config.TrustedCAFile(),
 			InsecureSkipTLSVerify: strconv.FormatBool(cli.Config.InsecureSkipTLSVerify()),
 			Timeout:               cli.Config.Timeout().String(),
 		}
 
+		// If token info is available add it
+		if len(cli.Config.Tokens().GetAccess()) != 0 {
+			shellCfg.AccessToken = cli.Config.Tokens().Access
+			shellCfg.AccessTokenExpiresAt = cli.Config.Tokens().ExpiresAt
+			shellCfg.RefreshToken = cli.Config.Tokens().Refresh
+		} else {
+			// Using API so using a different template
+			templateValue = envTmplAPI
+		}
 		// Get the user shell
 		shellCfg.userShell = shell()
 
@@ -130,7 +147,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		}
 
 		t := template.New("envConfig")
-		tmpl, err := t.Parse(envTmpl)
+		tmpl, err := t.Parse(templateValue)
 		if err != nil {
 			return err
 		}
@@ -141,6 +158,13 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 // refreshAccessToken attempts to silently refresh the access token
 func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) {
+	// If using API_KEY there's no token, so no need to refresh it
+	if len(cli.Config.APIKey()) != 0 && len(cli.Config.Tokens().GetAccess()) == 0 {
+		return func(cmd *cobra.Command, args []string) {
+			return
+		}
+	}
+
 	return func(cmd *cobra.Command, args []string) {
 		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens())
 		if err != nil {
