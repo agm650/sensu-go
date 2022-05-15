@@ -5,6 +5,7 @@ import (
 
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"
 )
@@ -230,6 +231,10 @@ func (c *MockGenericClient) List(ctx context.Context, resources interface{}, pre
 	return c.Called(ctx, resources, pred).Error(0)
 }
 
+func (c *MockGenericClient) Authorize(ctx context.Context, verb api.RBACVerb, name string) error {
+	return c.Called(ctx, verb, name).Error(0)
+}
+
 type MockEventFilterClient struct {
 	mock.Mock
 }
@@ -325,4 +330,88 @@ type MockClusterMetricStore struct {
 func (m *MockClusterMetricStore) EntityCount(ctx context.Context, kind string) (int, error) {
 	args := m.Called(ctx, kind)
 	return args.Get(0).(int), args.Error(1)
+}
+
+type MockRBACClient struct {
+	mock.Mock
+}
+
+func (m *MockRBACClient) ListRoleBindings(ctx context.Context) ([]*corev2.RoleBinding, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*corev2.RoleBinding), args.Error(1)
+}
+
+func (m *MockRBACClient) FetchRoleBinding(ctx context.Context, name string) (*corev2.RoleBinding, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(*corev2.RoleBinding), args.Error(1)
+}
+
+func (m *MockRBACClient) CreateRoleBinding(ctx context.Context, rb *corev2.RoleBinding) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
+}
+
+func (m *MockRBACClient) UpdateRoleBinding(ctx context.Context, rb *corev2.RoleBinding) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
+}
+
+func (m *MockRBACClient) ListRoles(ctx context.Context) ([]*corev2.Role, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*corev2.Role), args.Error(1)
+}
+
+func (m *MockRBACClient) FetchRole(ctx context.Context, name string) (*corev2.Role, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(*corev2.Role), args.Error(1)
+}
+
+func (m *MockRBACClient) CreateRole(ctx context.Context, rb *corev2.Role) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
+}
+
+func (m *MockRBACClient) UpdateRole(ctx context.Context, rb *corev2.Role) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
+}
+
+func (m *MockRBACClient) ListClusterRoleBindings(ctx context.Context) ([]*corev2.ClusterRoleBinding, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*corev2.ClusterRoleBinding), args.Error(1)
+}
+
+func (m *MockRBACClient) FetchClusterRoleBinding(ctx context.Context, name string) (*corev2.ClusterRoleBinding, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(*corev2.ClusterRoleBinding), args.Error(1)
+}
+
+func (m *MockRBACClient) CreateClusterRoleBinding(ctx context.Context, rb *corev2.ClusterRoleBinding) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
+}
+
+func (m *MockRBACClient) UpdateClusterRoleBinding(ctx context.Context, rb *corev2.ClusterRoleBinding) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
+}
+
+func (m *MockRBACClient) ListClusterRoles(ctx context.Context) ([]*corev2.ClusterRole, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*corev2.ClusterRole), args.Error(1)
+}
+
+func (m *MockRBACClient) FetchClusterRole(ctx context.Context, name string) (*corev2.ClusterRole, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(*corev2.ClusterRole), args.Error(1)
+}
+
+func (m *MockRBACClient) CreateClusterRole(ctx context.Context, rb *corev2.ClusterRole) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
+}
+
+func (m *MockRBACClient) UpdateClusterRole(ctx context.Context, rb *corev2.ClusterRole) error {
+	args := m.Called(ctx, rb)
+	return args.Error(0)
 }

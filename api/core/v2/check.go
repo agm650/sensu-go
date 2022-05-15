@@ -1,13 +1,13 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
 	"path"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	cron "github.com/robfig/cron/v3"
 	utilstrings "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
@@ -130,6 +130,7 @@ func NewCheck(c *CheckConfig) *Check {
 		DiscardOutput:          c.DiscardOutput,
 		MaxOutputSize:          c.MaxOutputSize,
 		Scheduler:              c.Scheduler,
+		Pipelines:              c.Pipelines,
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
@@ -246,6 +247,10 @@ func (c *Check) Validate() error {
 		}
 	}
 
+	if err := ValidateSubdues(c.Subdues); err != nil {
+		return err
+	}
+
 	return c.Subdue.Validate()
 }
 
@@ -268,7 +273,7 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	clone := &Clone{}
 	*clone = Clone(*c)
 
-	return jsoniter.Marshal(clone)
+	return json.Marshal(clone)
 }
 
 // MergeWith updates the current Check with the history of the check given as
@@ -306,6 +311,15 @@ func ValidateOutputMetricFormat(format string) error {
 		return nil
 	}
 	return errors.New("output metric format is not valid")
+}
+
+func ValidateSubdues(subdues []*TimeWindowRepeated) error {
+	for i, subdue := range subdues {
+		if err := subdue.Validate(); err != nil {
+			return fmt.Errorf("subdue %d invalid: %s", i, err)
+		}
+	}
+	return nil
 }
 
 // previousOccurrence returns the most recent CheckHistory item, excluding the current result.
